@@ -8,14 +8,14 @@ namespace WeifenLuo.WinFormsUI.Docking
     /// Dock window base class.
     /// </summary>
     [ToolboxItem(false)]
-    public partial class DockWindow : Panel, INestedPanesContainer, ISplitterDragSource
+    public partial class DockWindow : Panel, INestedPanesContainer, ISplitterHost
     {
         private DockPanel m_dockPanel;
         private DockState m_dockState;
         private SplitterBase m_splitter;
         private NestedPaneCollection m_nestedPanes;
 
-        internal DockWindow(DockPanel dockPanel, DockState dockState)
+        protected internal DockWindow(DockPanel dockPanel, DockState dockState)
         {
             m_nestedPanes = new NestedPaneCollection(this);
             m_dockPanel = dockPanel;
@@ -27,7 +27,7 @@ namespace WeifenLuo.WinFormsUI.Docking
             if (DockState == DockState.DockLeft || DockState == DockState.DockRight ||
                 DockState == DockState.DockTop || DockState == DockState.DockBottom)
             {
-                m_splitter = DockPanel.Extender.DockWindowSplitterControlFactory.CreateSplitterControl();
+                m_splitter = DockPanel.Theme.Extender.WindowSplitterControlFactory.CreateSplitterControl(this);
                 Controls.Add(m_splitter);
             }
 
@@ -57,6 +57,11 @@ namespace WeifenLuo.WinFormsUI.Docking
             }
 
             ResumeLayout();
+        }
+
+        public bool IsDockWindow
+        {
+            get { return true; }
         }
 
         public VisibleNestedPaneCollection VisibleNestedPanes
@@ -104,18 +109,18 @@ namespace WeifenLuo.WinFormsUI.Docking
                 }
                 // exclude the splitter
                 else if (DockState == DockState.DockLeft)
-                    rect.Width -= Measures.SplitterSize;
+                    rect.Width -= DockPanel.Theme.Measures.SplitterSize;
                 else if (DockState == DockState.DockRight)
                 {
-                    rect.X += Measures.SplitterSize;
-                    rect.Width -= Measures.SplitterSize;
+                    rect.X += DockPanel.Theme.Measures.SplitterSize;
+                    rect.Width -= DockPanel.Theme.Measures.SplitterSize;
                 }
                 else if (DockState == DockState.DockTop)
-                    rect.Height -= Measures.SplitterSize;
+                    rect.Height -= DockPanel.Theme.Measures.SplitterSize;
                 else if (DockState == DockState.DockBottom)
                 {
-                    rect.Y += Measures.SplitterSize;
-                    rect.Height -= Measures.SplitterSize;
+                    rect.Y += DockPanel.Theme.Measures.SplitterSize;
+                    rect.Height -= DockPanel.Theme.Measures.SplitterSize;
                 }
 
                 return rect;
@@ -231,25 +236,5 @@ namespace WeifenLuo.WinFormsUI.Docking
 
         #endregion
         #endregion
-    }
-
-    /// <summary>
-    /// Dock window of Visual Studio 2003/2005 theme.
-    /// </summary>
-    [ToolboxItem(false)]
-    internal class DefaultDockWindow : DockWindow
-    {
-        internal DefaultDockWindow(DockPanel dockPanel, DockState dockState) : base(dockPanel, dockState)
-        {
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            // if DockWindow is document, draw the border
-            if (DockState == DockState.Document)
-                e.Graphics.DrawRectangle(SystemPens.ControlDark, ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width - 1, ClientRectangle.Height - 1);
-
-            base.OnPaint(e);
-        }
     }
 }

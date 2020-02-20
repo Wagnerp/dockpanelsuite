@@ -1,20 +1,22 @@
-﻿using System;
-
-namespace WeifenLuo.WinFormsUI.Docking
+﻿namespace WeifenLuo.WinFormsUI.Docking
 {
+    using System;
+    using System.ComponentModel;
+
     public partial class DockPanel
     {
-        private DockPanelSkin m_dockPanelSkin = VS2005Theme.CreateVisualStudio2005();
         [LocalizedCategory("Category_Docking")]
-        [LocalizedDescription("DockPanel_DockPanelSkin")]
-        [Obsolete("Please use Theme instead.")]
+        [LocalizedDescription("DockPanel_DockPanelSkin_Description")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [Browsable(false)]
+        [Obsolete("Use Theme.Skin instead.")]
         public DockPanelSkin Skin
         {
-            get { return m_dockPanelSkin;  }
-            set { m_dockPanelSkin = value; }
+            get { return null;  }
         }
-        
-        private ThemeBase m_dockPanelTheme = new VS2005Theme();
+
+        private ThemeBase m_dockPanelTheme;
+
         [LocalizedCategory("Category_Docking")]
         [LocalizedDescription("DockPanel_DockPanelTheme")]
         public ThemeBase Theme
@@ -22,18 +24,30 @@ namespace WeifenLuo.WinFormsUI.Docking
             get { return m_dockPanelTheme; }
             set
             {
+                var old = m_dockPanelTheme;
                 if (value == null)
                 {
+                    m_dockPanelTheme = null;
                     return;
                 }
 
-                if (m_dockPanelTheme.GetType() == value.GetType())
+                if (m_dockPanelTheme?.GetType() == value.GetType())
                 {
                     return;
                 }
 
+                m_dockPanelTheme?.CleanUp(this);
                 m_dockPanelTheme = value;
-                m_dockPanelTheme.Apply(this);
+                m_dockPanelTheme.ApplyTo(this);
+                m_dockPanelTheme.PostApply(this);
+                if (old == null)
+                { 
+                    m_autoHideWindow = m_dockPanelTheme?.Extender.AutoHideWindowFactory.CreateAutoHideWindow(this);
+                    m_autoHideWindow.Visible = false;
+                    m_autoHideWindow.ActiveContentChanged += m_autoHideWindow_ActiveContentChanged;
+                    SetAutoHideWindowParent();
+                    LoadDockWindows();
+                }
             }
         }
     }
